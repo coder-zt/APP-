@@ -4,6 +4,8 @@ import com.android.build.gradle.internal.res.LinkApplicationAndroidResourcesTask
 import com.android.build.gradle.internal.res.namespaced.ProcessAndroidAppResourcesTask
 import com.coder.plugin.arsc.ArscEditor
 import com.coder.plugin.ulits.CompactAlgorithm
+import com.google.common.reflect.Types
+import org.gradle.api.JavaVersion
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.Task
@@ -13,6 +15,7 @@ import org.gradle.api.file.FileTree
 import org.gradle.api.internal.artifacts.configurations.DefaultConfiguration
 import org.gradle.api.internal.file.DefaultFilePropertyFactory
 import org.gradle.api.tasks.bundling.Zip
+import org.gradle.api.tasks.compile.JavaCompile
 
 class MyPlugin implements Plugin<Project> {
 
@@ -22,6 +25,7 @@ class MyPlugin implements Plugin<Project> {
     void apply(Project project) {
         mProject = project
         project.afterEvaluate {
+
             hookAapt()
         }
 //        project.task('testPlugin').doLast{
@@ -52,50 +56,68 @@ class MyPlugin implements Plugin<Project> {
 
 //        mergeDebugResources
         mProject.tasks.each {
-            if(it instanceof  LinkApplicationAndroidResourcesTask && it.name=="processDebugResources"){
-                println(it.name)
-
-                LinkApplicationAndroidResourcesTask resourcesTask = (LinkApplicationAndroidResourcesTask)it
-                resourcesTask.doLast { LinkApplicationAndroidResourcesTask task ->
-
-                    task.resPackageOutputFolder.each {
-                        it.asFileTree.each {
-//                            println(it.absolutePath)
-                            if(it.name == "resources-debug.ap_") {
-                                def parentPath = it.parentFile.absolutePath
-                                def resourcesPath = parentPath + "\\resources_arsc"
-                                def resourceFile = new File(resourcesPath)
-                                if (!resourceFile.exists()) {
-                                    resourceFile.mkdir()
-                                }
-                                FileTree resources = mProject.zipTree(it)
-                                println("parentPath == " + parentPath)
-                                resources.each {
-                                    def that = it
-                                    def fileHZ = that.absolutePath.split("resources-debug.ap__a74121b90b78eaa80c8255a7c18c1884")[1]
-                                    println(" that.absolutePath " + that.absolutePath)
-                                    def resourcePath = new File(resourceFile.absolutePath + fileHZ).parent
-                                    mProject.copy {
-                                        from that.absolutePath
-                                        into resourcePath
-                                    }
-                                    if (it.name == "resources.arsc") {
-                                        def arscFile = new File(resourceFile.absolutePath + fileHZ)
-                                        def arscEditor = new ArscEditor(arscFile)
-//                                        arscEditor.readTable()
-                                        arscEditor.reset(0x7a, [:])
-                                        println("修改文件")
-                                    }
-                                }//        archiveName "res.zip"
-//        destinationDir file("E:\\Coding\\Android\\AppGradlePlugin\\app\\build\\intermediates\\processed_res\\debug\\out")
-//        from("E:\\Coding\\Android\\AppGradlePlugin\\app\\build\\intermediates\\processed_res\\debug\\out\\resources_arsc")
-                                File f = new File("E:\\Coding\\Android\\AppGradlePlugin\\app\\build\\intermediates\\processed_res\\debug\\out\\resources_arsc");
-                                new CompactAlgorithm(new File("E:\\Coding\\Android\\AppGradlePlugin\\app\\build\\intermediates\\processed_res\\debug\\out", "resources-debug.ap_")).zipFiles(f);
-                            }
-                        }
-                    }
+//            if(it instanceof  LinkApplicationAndroidResourcesTask && it.name=="processDebugResources"){
+//                println(it.name)
+//
+//                LinkApplicationAndroidResourcesTask resourcesTask = (LinkApplicationAndroidResourcesTask)it
+//                resourcesTask.doLast { LinkApplicationAndroidResourcesTask task ->
+//
+//                    task.resPackageOutputFolder.each {
+//                        it.asFileTree.each {
+////                            println(it.absolutePath)
+//                            if(it.name == "resources-debug.ap_") {
+//                                def parentPath = it.parentFile.absolutePath
+//                                def resourcesPath = parentPath + "\\resources_arsc"
+//                                def resourceFile = new File(resourcesPath)
+//                                if (!resourceFile.exists()) {
+//                                    resourceFile.mkdir()
+//                                }
+//                                FileTree resources = mProject.zipTree(it)
+//                                println("parentPath == " + parentPath)
+//                                resources.each {
+//                                    def that = it
+//                                    def fileHZ = that.absolutePath.split("resources-debug.ap__a74121b90b78eaa80c8255a7c18c1884")[1]
+//                                    println(" that.absolutePath " + that.absolutePath)
+//                                    def resourcePath = new File(resourceFile.absolutePath + fileHZ).parent
+//                                    mProject.copy {
+//                                        from that.absolutePath
+//                                        into resourcePath
+//                                    }
+//                                    if (it.name == "resources.arsc") {
+//                                        def arscFile = new File(resourceFile.absolutePath + fileHZ)
+//                                        def arscEditor = new ArscEditor(arscFile)
+////                                        arscEditor.readTable()
+//                                        arscEditor.reset(0x7a, [:])
+//                                        println("修改文件")
+//                                    }
+//                                }//        archiveName "res.zip"
+////        destinationDir file("E:\\Coding\\Android\\AppGradlePlugin\\app\\build\\intermediates\\processed_res\\debug\\out")
+////        from("E:\\Coding\\Android\\AppGradlePlugin\\app\\build\\intermediates\\processed_res\\debug\\out\\resources_arsc")
+//                                File f = new File("E:\\Coding\\Android\\AppGradlePlugin\\app\\build\\intermediates\\processed_res\\debug\\out\\resources_arsc");
+//                                new CompactAlgorithm(new File("E:\\Coding\\Android\\AppGradlePlugin\\app\\build\\intermediates\\processed_res\\debug\\out", "resources-debug.ap_")).zipFiles(f);
+//                            }
+//                        }
+//                    }
+//                }
+//            }
+            if(it.name == "compileDebugJavaWithJavac" && it instanceof JavaCompile){
+                it.doLast {
+                    getmProject().ant.javac(
+                            srcdir: "F:\\AndroidLearnPlace\\AndroidPluginLearning\\AppGradlePlugin\\app\\src\\main\\java\\com\\coder\\testsmallgradle",
+                            source: it.sourceCompatibility,
+                            target: it.targetCompatibility,
+                            destdir: "F:\\AndroidLearnPlace\\AndroidPluginLearning\\AppGradlePlugin\\app"
+                    )
                 }
+//                JavaCompile jcTask = (JavaCompile)task
+//                getmProject().javaexec(
+//                    srcdir: "F:\\AndroidLearnPlace\\AndroidPluginLearning\\AppGradlePlugin\\app\\src\\main\\java\\com\\coder\\testsmallgradle\\MainActivity.java",
+//                    source: Types.JavaVersion.JAVA8,
+//                    target: Types.JavaVersion.JAVA8,
+//                    destdir: "F:\\AndroidLearnPlace\\AndroidPluginLearning\\AppGradlePlugin\\app"
+//                )
             }
+
 //            it.doFirst { task ->
 //                println(task.name + "====" + task.class)
 //                task.inputs.files.each {
